@@ -1,6 +1,6 @@
 FROM dockerfile/java:oracle-java8
 
-ADD . /srv/
+ADD collector-service /srv/collector-service
 WORKDIR /srv
 
 CMD ./run.sh
