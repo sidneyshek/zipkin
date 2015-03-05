@@ -15,6 +15,7 @@
  */
 
 import com.twitter.zipkin.builder.Scribe
+import com.twitter.zipkin.collector.HttpCollector
 import com.twitter.zipkin.redis
 import com.twitter.zipkin.collector.builder.CollectorServiceBuilder
 import com.twitter.zipkin.storage.Store
@@ -27,5 +28,6 @@ val redisBuilder = Store.Builder(
 )
 
 // TODO - Change this
-CollectorServiceBuilder(Scribe.Interface(categories = Set("zipkin")))
-  .writeTo(redisBuilder)
+//CollectorServiceBuilder(Scribe.Interface(categories = Set("zipkin")))
+//  .writeTo(redisBuilder)
+CollectorServiceBuilder(HttpCollector.Interface()).writeTo(redisBuilder)

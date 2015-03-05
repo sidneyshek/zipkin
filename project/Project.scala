@@ -131,7 +131,7 @@ object Zipkin extends Build {
     ) aggregate(
       tracegen, common, scrooge, zookeeper,
       query, queryCore, queryService, web, zipkinAggregate,
-      collectorScribe, collectorCore, collectorService,
+      collectorScribe, collectorHttp, collectorCore, collectorService,
       sampler, receiverScribe, receiverKafka, collector,
       cassandra, anormDB, kafka, redis, hbase
     )
@@ -344,6 +344,19 @@ object Zipkin extends Build {
       ) ++ testDependencies
     ).dependsOn(collectorCore, scrooge)
 
+  lazy val collectorHttp =
+    Project(
+      id = "zipkin-collector-http",
+      base = file("zipkin-collector-http"),
+      settings = defaultSettings
+    ).settings(
+        libraryDependencies ++= Seq(
+          scroogeDep("serializer"),
+          "io.argonaut"              %% "argonaut"          % "6.1-M4",
+          finagle("http")
+        ) ++ testDependencies
+      ).dependsOn(collectorCore)
+
   lazy val collector = Project(
     id = "zipkin-collector",
     base = file("zipkin-collector"),
@@ -404,7 +417,7 @@ object Zipkin extends Build {
     base = file("zipkin-collector-service"),
     settings = defaultSettings
   ).settings(
-    libraryDependencies ++= testDependencies,
+    libraryDependencies ++= testDependencies ++ Seq("io.argonaut"              %% "argonaut"          % "6.1-M4"),
 
     PackageDist.packageDistZipName := "zipkin-collector-service.zip",
     BuildProperties.buildPropertiesPackage := "com.twitter.zipkin",
@@ -415,7 +428,7 @@ object Zipkin extends Build {
       base =>
         (base / "config" +++ base / "src" / "test" / "resources").get
     }
-  ).dependsOn(collectorCore, collectorScribe, receiverKafka, cassandra, kafka, redis, anormDB, hbase)
+  ).dependsOn(collectorCore, collectorScribe, collectorHttp, receiverKafka, cassandra, kafka, redis, anormDB, hbase)
 
   lazy val zipkinAggregate =
     Project(
