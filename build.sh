@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-docker build -t zipkin-build -f Dockerfile-build .
+docker build -t zipkin-build .
 
 docker rm zipkin-build-run >/dev/null || echo >/dev/null
 docker run --name zipkin-build-run -it \
