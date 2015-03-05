@@ -17,9 +17,11 @@ import com.twitter.zipkin.builder.QueryServiceBuilder
 import com.twitter.zipkin.redis
 import com.twitter.zipkin.storage.Store
 
+val redisConfig = redis.Config("0.0.0.0", 6379)
+
 val storeBuilder = Store.Builder(
-  redis.StorageBuilder("0.0.0.0", 6379),
-  redis.IndexBuilder("0.0.0.0", 6379)
+  redis.StorageBuilder(redisConfig),
+  redis.IndexBuilder(redisConfig)
 )
 
 QueryServiceBuilder(storeBuilder)

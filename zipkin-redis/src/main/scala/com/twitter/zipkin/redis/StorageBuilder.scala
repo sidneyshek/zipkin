@@ -25,21 +25,16 @@ import com.twitter.zipkin.storage.Storage
 import com.twitter.util.Await
 import com.twitter.util.Future
 
-case class StorageBuilder(
-  host: String,
-  port: Int,
-  ttl: Duration = 7.days,
-  authPassword: Option[String] = None
-) extends Builder[Storage] { self =>
+case class StorageBuilder(config: Config) extends Builder[Storage] { self =>
 
-  def ttl(t: Duration): StorageBuilder = copy(ttl = t)
+  def ttl(t: Duration): StorageBuilder = copy(config = config.copy(ttl = t))
 
   def apply() = {
-    val client = Client("%s:%d".format(host, port))
-    val authenticate = authPassword.map(p => client.auth(StringToChannelBuffer(p))) getOrElse Future.Done
+    val client = Client("%s:%d".format(config.host, config.port))
+    val authenticate = config.authPassword.map(p => client.auth(StringToChannelBuffer(p))) getOrElse Future.Done
     Await.result(authenticate before Future.value(new RedisStorage {
       val database = client
-      val ttl = Some(self.ttl)
+      val ttl = Some(self.config.ttl)
     }), 10.seconds)
   }
 }

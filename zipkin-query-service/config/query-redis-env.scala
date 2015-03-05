@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.twitter.zipkin.builder.Scribe
+import com.twitter.zipkin.builder.QueryServiceBuilder
 import com.twitter.zipkin.redis
-import com.twitter.zipkin.collector.builder.CollectorServiceBuilder
 import com.twitter.zipkin.storage.Store
 
+val redisConfig = redis.Config.fromEnv()
 
-val redisConfig = redis.Config("0.0.0.0", 6379)
-
-val redisBuilder = Store.Builder(
-    redis.StorageBuilder(redisConfig),
-    redis.IndexBuilder(redisConfig)
+val storeBuilder = Store.Builder(
+  redis.StorageBuilder(redisConfig),
+  redis.IndexBuilder(redisConfig)
 )
 
-CollectorServiceBuilder(Scribe.Interface(categories = Set("zipkin")))
-  .writeTo(redisBuilder)
+QueryServiceBuilder(storeBuilder)

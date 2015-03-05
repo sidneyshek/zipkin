@@ -25,21 +25,16 @@ import com.twitter.zipkin.storage.Index
 import com.twitter.util.Await
 import com.twitter.util.Future
 
-case class IndexBuilder(
-  host: String,
-  port: Int,
-  ttl: Duration = 7.days,
-  authPassword: Option[String] = None
-) extends Builder[Index] { self =>
+case class IndexBuilder(config: Config) extends Builder[Index] { self =>
 
-  def ttl(t: Duration): IndexBuilder = copy(ttl = t)
+  def ttl(t: Duration): IndexBuilder = copy(config = config.copy(ttl = t))
 
   def apply() = {
-    val client = Client("%s:%d".format(host, port))
-    val authenticate = authPassword.map(p => client.auth(StringToChannelBuffer(p))) getOrElse Future.Done
+    val client = Client("%s:%d".format(config.host, config.port))
+    val authenticate = config.authPassword.map(p => client.auth(StringToChannelBuffer(p))) getOrElse Future.Done
     Await.result(authenticate before Future.value(new RedisIndex {
       val database = client
-      val ttl = Some(self.ttl)
+      val ttl = Some(self.config.ttl)
     }), 10.seconds)
   }
 }
