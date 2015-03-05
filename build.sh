@@ -12,19 +12,30 @@ docker run --name zipkin-build-run -it \
 mkdir -p dist/zipkin
 cd dist/zipkin
 
-rm zipkin-query-service.zip
-rm -r query-service
+rm -f zipkin-query-service.zip
+rm -rf query-service
 docker cp zipkin-build-run:/src/zipkin-query-service/dist/zipkin-query-service.zip .
 mkdir query-service
 unzip zipkin-query-service.zip -d query-service
 
-rm zipkin-web.zip
-rm -r web
+rm -f zipkin-web.zip
+rm -rf web
 docker cp zipkin-build-run:/src/zipkin-web/dist/zipkin-web.zip .
 mkdir web
 unzip zipkin-web.zip -d web
-mkdir -p web/zipkin-web/src/main
-mv web/resources web/zipkin-web/src/main
+rm -rf zipkin-web/src/main
+mkdir -p zipkin-web/src/main
+mv web/resources zipkin-web/src/main
 
 docker build -t zipkin .
-#docker build -t zipkin-collector dist/zipkin-collector
+
+mkdir -p ../zipkin-collector
+cd ../zipkin-collector
+
+rm -f zipkin-collector-service.zip
+rm -rf collector-service
+docker cp zipkin-build-run:/src/zipkin-collector-service/dist/zipkin-collector-service.zip .
+mkdir collector-service
+unzip zipkin-collector-service.zip -d collector-service
+
+docker build -t zipkin-collector .
