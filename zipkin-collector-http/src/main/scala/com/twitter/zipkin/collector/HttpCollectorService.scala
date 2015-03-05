@@ -7,7 +7,6 @@ import com.twitter.finagle.builder.ServerBuilder
 import com.twitter.finagle.http.path.{Root, Path}
 import com.twitter.finagle.http.{Request, Http}
 import com.twitter.finagle.stats.StatsReceiver
-import com.twitter.finagle.thrift.ThriftServerFramedCodec
 import com.twitter.finagle.tracing.{Tracer, SpanId}
 import com.twitter.finagle.{Service, Filter}
 import com.twitter.logging.Logger
@@ -19,14 +18,13 @@ import com.twitter.zipkin.common._
 
 import argonaut._, Argonaut._
 import com.twitter.zipkin.storage.Store
-import com.twitter.zipkin.thriftscala
-import org.apache.thrift.protocol.TBinaryProtocol
 import org.jboss.netty.handler.codec.http._
+import scalaz.syntax.either._
 
 object HttpCollector {
   object Interface {
     def apply() = {
-      type T = Seq[String]
+      type T = String
       new CollectorInterface[T] {
         val filter = new HttpFilter
 
@@ -80,43 +78,44 @@ object HttpCollector {
 }
 
 class HttpCollectorService(
-  val writeQueue: WriteQueue[Seq[_ <: String]],
+  val writeQueue: WriteQueue[String],
   val stores: Seq[Store]) extends CollectorService {
 
   // TODO - What do we do about the thrift methods for dealing with annotations?
   def write(s: String): Boolean =
-    writeQueue.add(Seq(s))
+    writeQueue.add(s)
 }
 
-class HttpFilter extends Filter[Seq[String], Unit, Span, Unit] {
+class HttpFilter extends Filter[String, Unit, Span, Unit] {
   import Decoders._
   private val log = Logger.get
 
-  def apply(logEntries: Seq[String], service: Service[Span, Unit]): Future[Unit] = {
-    Future.join {
-      logEntries.map { msg =>
+  def apply(logEntries: String, service: Service[Span, Unit]): Future[Unit] = {
+    Future {
         try {
+          log.ifDebug(s"Processing message: $logEntries")
           Stats.time("deserializeSpan") {
-            msg.decodeEither[Span]
+            logEntries.decodeEither[List[Span]].fold({ _ => logEntries.decodeEither[Span].map { List(_) } }, _.right)
           }.fold({ e =>
-            log.warning(e, "Invalid msg: %s", msg)
+            log.warning(e, "Invalid msg: %s", logEntries)
             Stats.incr("collector.invalid_msg")
             Future.Unit
-          }, { s =>
-            log.ifDebug("Processing span: " + s + " from " + msg)
-            service(s)
+          }, { ss =>
+            ss.map { s =>
+              log.ifDebug(s"Processing span: $s")
+              service(s)
+            }
           })
         } catch {
           case e: Exception => {
             // scribe doesn't have any ResultCode.ERROR or similar
             // let's just swallow this invalid msg
-            log.warning(e, "Invalid msg: %s", msg)
+            log.warning(e, "Invalid msg: %s", logEntries)
             Stats.incr("collector.invalid_msg")
             Future.Unit
           }
         }
       }
-    }
   }
 
 
