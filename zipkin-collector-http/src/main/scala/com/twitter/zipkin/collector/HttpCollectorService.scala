@@ -153,7 +153,7 @@ object Decoders {
         value <- c.get[String]("value")
         endpoint <- c.get[Option[Endpoint]]("endpoint")
         duration <- c.get[Option[Long]]("duration")
-      } yield Annotation(timestamp, value, endpoint, duration.map { Duration.fromMilliseconds })
+      } yield Annotation(timestamp, value, endpoint, duration.map { Duration.fromMicroseconds })
     }
 
   // TODO - expand this beyond strings
