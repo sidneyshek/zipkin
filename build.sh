@@ -2,6 +2,9 @@
 set -e
 set -x
 
+export WEBQUERY_TAG=${WEBQUERY_TAG:-'zipkin'}
+export COLLECTOR_TAG=${COLLECTOR_TAG:-'zipkin-collector'}
+
 docker build -t zipkin-build .
 
 docker rm zipkin-build-run >/dev/null || echo >/dev/null
@@ -28,7 +31,7 @@ rm -rf zipkin-web/src/main
 mkdir -p zipkin-web/src/main
 mv web/resources zipkin-web/src/main
 
-docker build -t zipkin .
+docker build -t $WEBQUERY_TAG .
 
 mkdir -p ../zipkin-collector
 cd ../zipkin-collector
@@ -39,4 +42,4 @@ docker cp zipkin-build-run:/src/zipkin-collector-service/dist/zipkin-collector-s
 mkdir collector-service
 unzip zipkin-collector-service.zip -d collector-service
 
-docker build -t zipkin-collector .
+docker build -t $COLLECTOR_TAG .
