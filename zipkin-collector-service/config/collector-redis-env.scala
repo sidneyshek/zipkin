@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import com.twitter.zipkin.builder.Scribe
+import com.twitter.zipkin.builder.{ZipkinServerBuilder, Scribe}
 import com.twitter.zipkin.collector.HttpCollector
 import com.twitter.zipkin.redis
 import com.twitter.zipkin.collector.builder.CollectorServiceBuilder
@@ -30,4 +30,4 @@ val redisBuilder = Store.Builder(
 // TODO - Change this
 //CollectorServiceBuilder(Scribe.Interface(categories = Set("zipkin")))
 //  .writeTo(redisBuilder)
-CollectorServiceBuilder(HttpCollector.Interface()).writeTo(redisBuilder)
+CollectorServiceBuilder(HttpCollector.Interface(), serverBuilder = ZipkinServerBuilder(8080, 9000)).writeTo(redisBuilder)
